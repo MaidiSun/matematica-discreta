@@ -86,7 +86,7 @@ class Entrega {
             int numVars = n + 1; // numero de variables
 
             // generamos todas las combinacionees posibles de valores para las Variables
-            int totalCombinaciones = 1 << numVars; // 2^n combinacionez
+            int totalCombinaciones = 1 << numVars; // 2^n combinaciones
             boolean esTautologia = true;
             boolean esContradiccion = true;
 
