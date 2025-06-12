@@ -1,3 +1,4 @@
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,13 +50,15 @@ import java.util.stream.IntStream;
  * de texte estigui configurat amb codificació UTF-8.
  */
 class Entrega {
-  static final String[] NOMS = {};
 
-  /*
-   * Aquí teniu els exercicis del Tema 1 (Lògica).
-   */
-  static class Tema1 {
+    static final String[] NOMS = {"Maidi Sun", "Daniel Martin Colomar", "Alberto Atero Garcia"};
+
     /*
+   * Aquí teniu els exercicis del Tema 1 (Lògica).
+     */
+    static class Tema1 {
+
+        /*
      * Determinau si l'expressió és una tautologia o no:
      *
      * (((vars[0] ops[0] vars[1]) ops[1] vars[2]) ops[2] vars[3]) ...
@@ -72,17 +75,73 @@ class Entrega {
      *   -1 en qualsevol altre cas.
      *
      * Vegeu els tests per exemples.
-     */
-    static final char CONJ = '∧';
-    static final char DISJ = '∨';
-    static final char IMPL = '→';
-    static final char NAND = '.';
+         */
+        static final char CONJ = '∧';
+        static final char DISJ = '∨';
+        static final char IMPL = '→';
+        static final char NAND = '.';
 
-    static int exercici1(char[] ops, int[] vars) {
-      throw new UnsupportedOperationException("pendent");
-    }
+        static int exercici1(char[] ops, int[] vars) {
+            int n = vars.length;
+            int numVars = n + 1; // numero de variables
 
-    /*
+            // generamos todas las combinacionees posibles de valores para las Variables
+            int totalCombinaciones = 1 << numVars; // 2^n combinacionez
+            boolean esTautologia = true;
+            boolean esContradiccion = true;
+
+            // evaluamos para cada Combinación de valores de las variables
+            for (int i = 0; i < totalCombinaciones; i++) {
+                boolean[] valVars = new boolean[numVars];
+
+                // Asignamos los valores de las variables segun la combinacion
+                for (int j = 0; j < numVars; j++) {
+                    valVars[j] = (i & (1 << j)) != 0; // usa bitmask para saber el valor de cada var
+                }
+
+                // evaluamos la expresion booleana con los valorez asignados
+                boolean resultado = valVars[vars[0]];
+                for (int j = 0; j < ops.length; j++) {
+                    boolean v1 = resultado;
+                    boolean v2 = valVars[vars[j + 1]];
+
+                    // aplicamos el operador correSpondiente
+                    switch (ops[j]) {
+                        case CONJ:
+                            resultado = v1 && v2;
+                            break;
+                        case DISJ:
+                            resultado = v1 || v2;
+                            break;
+                        case IMPL:
+                            resultado = !v1 || v2;
+                            break;
+                        case NAND:
+                            resultado = !(v1 && v2);
+                            break;
+                    }
+                }
+
+                // actualizamos si la expresioon es una tautologia o contradiccion
+                if (resultado) {
+                    esContradiccion = false;
+                } else {
+                    esTautologia = false;
+                }
+            }
+
+            // determinamos el tipoo de expresion
+            if (esTautologia) {
+                return 1; // tautología
+            } else if (esContradiccion) {
+                return 0; // contradiccion
+            } else {
+                return -1; // ni tautologia ni contradicción
+            }
+        }
+
+
+        /*
      * Aquest mètode té de paràmetre l'univers (representat com un array) i els predicats
      * adients `p` i `q`. Per avaluar aquest predicat, si `x` és un element de l'univers, podeu
      * fer-ho com `p.test(x)`, que té com resultat un booleà (true si `P(x)` és cert).
@@ -91,35 +150,59 @@ class Entrega {
      * certa.
      *
      * (∀x : P(x)) <-> (∃!x : Q(x))
-     */
-    static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q) {
-      throw new UnsupportedOperationException("pendent");
+         */
+        static boolean exercici2(int[] universe, Predicate<Integer> p, Predicate<Integer> q) {
+            // comprovem si p(x) es certa per a tot element de l'universo
+            boolean todosCumplenP = true;
+            for (int i = 0; i < universe.length; i++) {
+                int valor = universe[i];
+                if (!p.test(valor)) {
+                    todosCumplenP = false;
+                    break;
+                }
+            }
+
+            // Comprobamos si existe exactament 1 elemnt x tal q Q(x) sea cierto
+            int cantidadQueCumplenQ = 0;
+            for (int i = 0; i < universe.length; i++) {
+                int valor = universe[i];
+                if (q.test(valor)) {
+                    cantidadQueCumplenQ++;
+                    if (cantidadQueCumplenQ > 1) {
+                        // si hay mas d un elemento que cumple Q(x), devolvemos fals
+                        return false;
+                    }
+                }
+            }
+
+            // verificamos si la propocisión es cierta: 
+            //para todos x se cumple p(x) sii existe unico x q cumple q(x)
+            return (todosCumplenP == (cantidadQueCumplenQ == 1));
+        }
+
+        static void tests() {
+            // Exercici 1
+            // Taules de veritat
+
+            // Tautologia: ((p0 → p2) ∨ p1) ∨ p0
+            test(1, 1, 1, () -> exercici1(new char[]{IMPL, DISJ, DISJ}, new int[]{0, 2, 1, 0}) == 1);
+
+            // Contradicció: (p0 . p0) ∧ p0
+            test(1, 1, 2, () -> exercici1(new char[]{NAND, CONJ}, new int[]{0, 0, 0}) == 0);
+
+            // Exercici 2
+            // Equivalència
+            test(1, 2, 1, () -> {
+                return exercici2(new int[]{1, 2, 3}, (x) -> x == 0, (x) -> x == 0);
+            });
+
+            test(1, 2, 2, () -> {
+                return exercici2(new int[]{1, 2, 3}, (x) -> x >= 1, (x) -> x % 2 == 0);
+            });
+        }
     }
 
-    static void tests() {
-      // Exercici 1
-      // Taules de veritat
-
-      // Tautologia: ((p0 → p2) ∨ p1) ∨ p0
-      test(1, 1, 1, () -> exercici1(new char[] { IMPL, DISJ, DISJ }, new int[] { 0, 2, 1, 0 }) == 1);
-
-      // Contradicció: (p0 . p0) ∧ p0
-      test(1, 1, 2, () -> exercici1(new char[] { NAND, CONJ }, new int[] { 0, 0, 0 }) == 0);
-
-      // Exercici 2
-      // Equivalència
-
-      test(1, 2, 1, () -> {
-        return exercici2(new int[] { 1, 2, 3 }, (x) -> x == 0, (x) -> x == 0);
-      });
-
-      test(1, 2, 2, () -> {
-        return exercici2(new int[] { 1, 2, 3 }, (x) -> x >= 1, (x) -> x % 2 == 0);
-      });
-    }
-  }
-
-  /*
+    /*
    * Aquí teniu els exercicis del Tema 2 (Conjunts).
    *
    * Per senzillesa tractarem els conjunts com arrays (sense elements repetits). Per tant, un
@@ -139,166 +222,414 @@ class Entrega {
    * i el codomini int[] b. En el cas de tenir un objecte de tipus Function<Integer, Integer>, per
    * aplicar f a x, és a dir, "f(x)" on x és d'A i el resultat f.apply(x) és de B, s'escriu
    * f.apply(x).
-   */
-  static class Tema2 {
-    /*
+     */
+    static class Tema2 {
+
+        /*
      * Trobau el nombre de particions diferents del conjunt `a`, que podeu suposar que no és buid.
      *
      * Pista: Cercau informació sobre els nombres de Stirling.
-     */
-    static int exercici1(int[] a) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static int exercici1(int[] a) {
+            int n = a.length;  // tamaño del conjnto a
 
-    /*
+            // creamos una tabla para guardar los numeross de Stirling 
+            int[][] stirling = new int[n + 1][n + 1];
+
+            // inicializamoos las condiciones base
+            stirling[0][0] = 1;
+
+            // calculo de los numeros de stirling de segundo orden S(n, k)
+            for (int i = 1; i <= n; i++) {
+                for (int k = 1; k <= i; k++) {
+                    stirling[i][k] = k * stirling[i - 1][k] + stirling[i - 1][k - 1];
+                }
+            }
+
+            // la suma total de particiones distintas es sumar S(n,k) de k=1 a n
+            int totalParticions = 0;
+            for (int k = 1; k <= n; k++) {
+                totalParticions += stirling[n][k];
+            }
+
+            return totalParticions; // devolvemos el total d particioness
+        }
+
+
+        /*
      * Trobau el cardinal de la relació d'ordre parcial sobre `a` més petita que conté `rel` (si
      * existeix). En altres paraules, el cardinal de la seva clausura reflexiva, transitiva i
      * antisimètrica.
      *
      * Si no existeix, retornau -1.
-     */
-    static int exercici2(int[] a, int[][] rel) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static int exercici2(int[] a, int[][] rel) {
+            int n = a.length;  // numero de elemntos en el conjunto
 
-    /*
+            // inicializar la matriz de relación de tamaño n x n
+            int[][] relacion = new int[n][n];
+
+            // convertimos la relación dada en una matris de relacion
+            for (int[] par : rel) {
+                int x = par[0];
+                int y = par[1];
+
+                // si ya hay la relacion inversa (x,y) y (y,x) con x != y, no se puede construir una relacion antisimetrica
+                if (x != y && relacion[y][x] == 1) {
+                    return -1;  // violación de antisimetria
+                }
+
+                relacion[x][y] = 1;  // (x, y) está en la relazion
+            }
+
+            // añadimos reflexividad: (x,x) debe estar siempre en la relacion
+            for (int i = 0; i < n; i++) {
+                relacion[i][i] = 1;
+            }
+
+            // añadimos transitividad: si (x,y) y (y,z) existen, añadimos (x,z)
+            boolean cambio = true;
+            while (cambio) {
+                cambio = false;
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        if (relacion[i][j] == 1) {
+                            for (int k = 0; k < n; k++) {
+                                if (relacion[j][k] == 1 && relacion[i][k] == 0) {
+                                    relacion[i][k] = 1;  // añadimmos la transitividad
+                                    cambio = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // añadimos antisimetria: si (x,y) y (y,x) existen y x != y, quitamos una de las dos
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (i != j && relacion[i][j] == 1 && relacion[j][i] == 1) {
+                        relacion[i][j] = 0;  // eliminamos (i,j) para que sea antisimetrico
+                    }
+                }
+            }
+
+            // calculamos el cardinal de la relación de orden parcial
+            int cardinal = 0;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (relacion[i][j] == 1) {
+                        cardinal++;
+                    }
+                }
+            }
+
+            return cardinal;
+        }
+
+
+        /*
      * Donada una relació d'ordre parcial `rel` definida sobre `a` i un subconjunt `x` de `a`,
      * retornau:
      * - L'ínfim de `x` si existeix i `op` és false
      * - El suprem de `x` si existeix i `op` és true
      * - null en qualsevol altre cas
-     */
-    static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static Integer exercici3(int[] a, int[][] rel, int[] x, boolean op) {
+            int n = a.length;  // numero de elementos en el conjunto a
+            Integer resultat = null;
 
-    /*
+            // si op es false, buscamos el infimo de x
+            if (!op) {
+                for (int posibleElemento : a) {
+                    boolean esInfimo = true;
+                    // comprovamos si el candidato es menor o igual q todos los elemntos de x segun la relacion
+                    for (int elemento : x) {
+                        boolean relacionado = false;
+                        for (int[] par : rel) {
+                            if (par[0] == posibleElemento && par[1] == elemento) {
+                                relacionado = true;
+                                break;
+                            }
+                        }
+                        if (!relacionado) {
+                            esInfimo = false;
+                            break;
+                        }
+                    }
+                    // si encontramos un candidato q es el infimo de x, lo actualizamos
+                    if (esInfimo) {
+                        if (resultat == null) {
+                            resultat = posibleElemento;
+                        } else {
+                            boolean esMasGrande = false;
+                            for (int[] par : rel) {
+                                if (par[0] == resultat && par[1] == posibleElemento) {
+                                    esMasGrande = true;
+                                    break;
+                                }
+                            }
+                            if (!esMasGrande) {
+                                resultat = posibleElemento;
+                            }
+                        }
+                    }
+                }
+            } // si op es true, buscamos el supremoo de x
+            else {
+                for (int candidate : a) {
+                    boolean esSuprem = true;
+                    // revisamos si el candidato es mayor o igual a todos los elementos de x segun la relazion
+                    for (int element : x) {
+                        boolean relacionado = false;
+                        for (int[] par : rel) {
+                            if (par[0] == element && par[1] == candidate) {
+                                relacionado = true;
+                                break;
+                            }
+                        }
+                        if (!relacionado) {
+                            esSuprem = false;
+                            break;
+                        }
+                    }
+                    // si vemos que el candidato es el supremo, actualizamos
+                    if (esSuprem) {
+                        if (resultat == null) {
+                            resultat = candidate;
+                        } else {
+                            boolean esMasPeque = false;
+                            for (int[] par : rel) {
+                                if (par[0] == candidate && par[1] == resultat) {
+                                    esMasPeque = true;
+                                    break;
+                                }
+                            }
+                            if (!esMasPeque) {
+                                resultat = candidate;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return resultat;
+        }
+
+
+        /*
      * Donada una funció `f` de `a` a `b`, retornau:
      *  - El graf de la seva inversa (si existeix)
      *  - Sinó, el graf d'una inversa seva per l'esquerra (si existeix)
      *  - Sinó, el graf d'una inversa seva per la dreta (si existeix)
      *  - Sinó, null.
-     */
-    static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static int[][] exercici4(int[] a, int[] b, Function<Integer, Integer> f) {
+            int n = a.length;
+            int m = b.length;
 
-    /*
+            //calcula f(a[i]) y lo guarda en fa[]
+            int[] fa = new int[n];
+            for (int i = 0; i < n; i++) {
+                fa[i] = f.apply(a[i]);
+            }
+
+            //comprobamos si es inyectiva: ningun valor de fa[] puede repetirse
+            boolean injectiva = true;
+            outer:
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    if (fa[i] == fa[j]) {
+                        injectiva = false;
+                        break outer;
+                    }
+                }
+            }
+
+            //Comprobamos sobreyectiva: cada b[j] debe apareser en fa[]
+            boolean sobreyectiva = true;
+            for (int j = 0; j < m; j++) {
+                boolean trobat = false;
+                for (int i = 0; i < n; i++) {
+                    if (fa[i] == b[j]) {
+                        trobat = true;
+                        break;
+                    }
+                }
+                if (!trobat) {
+                    sobreyectiva = false;
+                    break;
+                }
+            }
+
+            //Si es biyectiva, devolvemos la grafica de la inversa completa (tamaño = m)
+            if (injectiva && sobreyectiva) {
+                int[][] graf = new int[m][2];
+                for (int j = 0; j < m; j++) {
+                    int y = b[j];
+                    // busca la i tal que fa[i] == y
+                    for (int i = 0; i < n; i++) {
+                        if (fa[i] == y) {
+                            graf[j][0] = y;
+                            graf[j][1] = a[i];
+                            break;
+                        }
+                    }
+                }
+                return graf;
+            }
+
+            //si solo es inyectiva (inversa por la izquierda), devolvemos todos los pares (fa[i], a[i])
+            if (injectiva) {
+                int[][] graf = new int[n][2];
+                for (int i = 0; i < n; i++) {
+                    graf[i][0] = fa[i];
+                    graf[i][1] = a[i];
+                }
+                return graf;
+            }
+
+            // Si solo es sobreyectiva (inversa por la derecha), para cada b[j] devolvemos una preimagen cualquiera
+            if (sobreyectiva) {
+                int[][] graf = new int[m][2];
+                for (int j = 0; j < m; j++) {
+                    int y = b[j];
+                    for (int i = 0; i < n; i++) {
+                        if (fa[i] == y) {
+                            graf[j][0] = y;
+                            graf[j][1] = a[i];
+                            break;
+                        }
+                    }
+                }
+                return graf;
+            }
+
+            // no existe ningun tipo de inversa 
+            return null;
+
+        }
+
+        /*
      * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
-     */
-    static void tests() {
-      // Exercici 1
-      // Nombre de particions
+         */
+        static void tests() {
+            // Exercici 1
+            // Nombre de particions
 
-      test(2, 1, 1, () -> exercici1(new int[] { 1 }) == 1);
-      test(2, 1, 2, () -> exercici1(new int[] { 1, 2, 3 }) == 5);
+            test(2, 1, 1, () -> exercici1(new int[]{1}) == 1);
+            test(2, 1, 2, () -> exercici1(new int[]{1, 2, 3}) == 5);
 
-      // Exercici 2
-      // Clausura d'ordre parcial
+            // Exercici 2
+            // Clausura d'ordre parcial
+            final int[] INT02 = {0, 1, 2};
 
-      final int[] INT02 = { 0, 1, 2 };
+            test(2, 2, 1, () -> exercici2(INT02, new int[][]{{0, 1}, {1, 2}}) == 6);
+            test(2, 2, 2, () -> exercici2(INT02, new int[][]{{0, 1}, {1, 0}, {1, 2}}) == -1);
 
-      test(2, 2, 1, () -> exercici2(INT02, new int[][] { {0, 1}, {1, 2} }) == 6);
-      test(2, 2, 2, () -> exercici2(INT02, new int[][] { {0, 1}, {1, 0}, {1, 2} }) == -1);
+            // Exercici 3
+            // Ínfims i suprems
+            final int[] INT15 = {1, 2, 3, 4, 5};
+            final int[][] DIV15 = generateRel(INT15, (n, m) -> m % n == 0);
+            final Integer ONE = 1;
 
-      // Exercici 3
-      // Ínfims i suprems
+            test(2, 3, 1, () -> ONE.equals(exercici3(INT15, DIV15, new int[]{2, 3}, false)));
+            test(2, 3, 2, () -> exercici3(INT15, DIV15, new int[]{2, 3}, true) == null);
 
-      final int[] INT15 = { 1, 2, 3, 4, 5 };
-      final int[][] DIV15 = generateRel(INT15, (n, m) -> m % n == 0);
-      final Integer ONE = 1;
+            // Exercici 4
+            // Inverses
+            final int[] INT05 = {0, 1, 2, 3, 4, 5};
 
-      test(2, 3, 1, () -> ONE.equals(exercici3(INT15, DIV15, new int[] { 2, 3 }, false)));
-      test(2, 3, 2, () -> exercici3(INT15, DIV15, new int[] { 2, 3 }, true) == null);
+            test(2, 4, 1, () -> {
+                var inv = exercici4(INT05, INT02, (x) -> x / 2);
 
-      // Exercici 4
-      // Inverses
+                if (inv == null) {
+                    return false;
+                }
 
-      final int[] INT05 = { 0, 1, 2, 3, 4, 5 };
+                inv = lexSorted(inv);
 
-      test(2, 4, 1, () -> {
-        var inv = exercici4(INT05, INT02, (x) -> x/2);
+                if (inv.length != INT02.length) {
+                    return false;
+                }
 
-        if (inv == null)
-          return false;
+                for (int i = 0; i < INT02.length; i++) {
+                    if (inv[i][0] != i || inv[i][1] / 2 != i) {
+                        return false;
+                    }
+                }
 
-        inv = lexSorted(inv);
+                return true;
+            });
 
-        if (inv.length != INT02.length)
-          return false;
+            test(4, 2, 2, () -> {
+                var inv = exercici4(INT02, INT05, (x) -> x);
 
-        for (int i = 0; i < INT02.length; i++) {
-          if (inv[i][0] != i || inv[i][1]/2 != i)
-            return false;
+                if (inv == null) {
+                    return false;
+                }
+
+                inv = lexSorted(inv);
+
+                if (inv.length != INT05.length) {
+                    return false;
+                }
+
+                for (int i = 0; i < INT02.length; i++) {
+                    if (inv[i][0] != i || inv[i][1] != i) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
         }
 
-        return true;
-      });
-
-      test(2, 4, 2, () -> {
-        var inv = exercici4(INT02, INT05, (x) -> x);
-
-        if (inv == null)
-          return false;
-
-        inv = lexSorted(inv);
-
-        if (inv.length != INT05.length)
-          return false;
-
-        for (int i = 0; i < INT02.length; i++) {
-          if (inv[i][0] != i || inv[i][1] != i)
-            return false;
-        }
-
-        return true;
-      });
-    }
-
-    /*
+        /*
      * Ordena lexicogràficament un array de 2 dimensions
      * Per exemple:
      *  arr = {{1,0}, {2,2}, {0,1}}
      *  resultat = {{0,1}, {1,0}, {2,2}}
-     */
-    static int[][] lexSorted(int[][] arr) {
-      if (arr == null)
-        return null;
+         */
+        static int[][] lexSorted(int[][] arr) {
+            if (arr == null) {
+                return null;
+            }
 
-      var arr2 = Arrays.copyOf(arr, arr.length);
-      Arrays.sort(arr2, Arrays::compare);
-      return arr2;
-    }
+            var arr2 = Arrays.copyOf(arr, arr.length);
+            Arrays.sort(arr2, Arrays::compare);
+            return arr2;
+        }
 
-    /*
+        /*
      * Genera un array int[][] amb els elements {a, b} (a de as, b de bs) que satisfàn pred.test(a, b)
      * Per exemple:
      *   as = {0, 1}
      *   bs = {0, 1, 2}
      *   pred = (a, b) -> a == b
      *   resultat = {{0,0}, {1,1}}
-     */
-    static int[][] generateRel(int[] as, int[] bs, BiPredicate<Integer, Integer> pred) {
-      var rel = new ArrayList<int[]>();
+         */
+        static int[][] generateRel(int[] as, int[] bs, BiPredicate<Integer, Integer> pred) {
+            var rel = new ArrayList<int[]>();
 
-      for (int a : as) {
-        for (int b : bs) {
-          if (pred.test(a, b)) {
-            rel.add(new int[] { a, b });
-          }
+            for (int a : as) {
+                for (int b : bs) {
+                    if (pred.test(a, b)) {
+                        rel.add(new int[]{a, b});
+                    }
+                }
+            }
+
+            return rel.toArray(new int[][]{});
         }
-      }
 
-      return rel.toArray(new int[][] {});
+        // Especialització de generateRel per as = bs
+        static int[][] generateRel(int[] as, BiPredicate<Integer, Integer> pred) {
+            return generateRel(as, as, pred);
+        }
     }
 
-    // Especialització de generateRel per as = bs
-    static int[][] generateRel(int[] as, BiPredicate<Integer, Integer> pred) {
-      return generateRel(as, as, pred);
-    }
-  }
-
-  /*
+    /*
    * Aquí teniu els exercicis del Tema 3 (Grafs).
    *
    * Els (di)grafs vendran donats com llistes d'adjacència (és a dir, tractau-los com diccionaris
@@ -310,35 +641,188 @@ class Entrega {
    *   {0, 2}, // veïns de 1
    *   {0, 1}  // veïns de 2
    * };
-   */
-  static class Tema3 {
-    /*
-     * Determinau si el graf `g` (no dirigit) té cicles.
      */
-    static boolean exercici1(int[][] g) {
-      throw new UnsupportedOperationException("pendent");
-    }
+    static class Tema3 {
 
-    /*
+        /*
+     * Determinau si el graf `g` (no dirigit) té cicles.
+         */
+        static boolean exercici1(int[][] g) {
+            // Obtiene el número de vértices en el grafo 'g'
+            int n = g.length;
+
+            // Crea una lista booleana para marcar los vertices visitados durante la búsqueda
+            boolean[] visitat = new boolean[n];
+
+            // Recorre todos los vertices del grafo
+            for (int v = 0; v < n; v++) {
+
+                if (!visitat[v]) { // Si el vértice 'v' no ha sido visitado aun
+
+                    // Realiza una búsqueda en profundidad (DFS) para detectar un ciclo
+                    // dfsCicle recibe el grafo, el vértice actual, el vértice padre (-1 indica que no tiene padre) y la lista de visitados
+                    if (dfsCicle(g, v, -1, visitat)) {
+                        // Si se detecta un ciclo, devuelve true
+                        return true;
+                    }
+                }
+            }
+
+            // Si no se detectaron ciclos en ninguna componente del grafo, devuelve false
+            return false;
+
+        }
+
+        static boolean dfsCicle(int[][] g, int actual, int padre, boolean[] visitat) {
+            visitat[actual] = true; // Marcamos el vertice actual como visistado
+
+            for (int vecino : g[actual]) {
+                if (!visitat[vecino]) {
+                    // Si el vecino no ha sido visitado, hacemos una llamada recursiva al DFS
+                    if (dfsCicle(g, vecino, actual, visitat)) {
+                        return true;
+                    }
+                } else if (vecino != padre) {
+                    // Si el vecino ya está visitado y no es el padre, se ha detectado un ciclo
+                    return true;
+                }
+            }
+
+            return false; // No se ha encontrado ningun ciclo en esta rama
+        }
+
+        /*
      * Determinau si els dos grafs són isomorfs. Podeu suposar que cap dels dos té ordre major que
      * 10.
-     */
-    static boolean exercici2(int[][] g1, int[][] g2) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static boolean exercici2(int[][] g1, int[][] g2) {
+            int n = g1.length;
+            if (g2.length != n) {
+                return false; // Si los grafos no tienen el mismo numro de vertices, no son isomorfos
+            }
+            int[] perm = new int[n];
+            for (int i = 0; i < n; i++) {
+                perm[i] = i; // Inicializamos la permutación con el orden natural
+            }
+            do {
+                // Comprobamos si con la permutación actual, los grafos son isomorfos
+                if (isIsomorphic(g1, g2, perm)) {
+                    return true;
+                }
+            } while (nextPermutation(perm)); // Generamos la siguiente permutación
 
-    /*
+            return false; // Si ninguna permutación funciona, no son isomorfos
+        }
+
+        static boolean isIsomorphic(int[][] g1, int[][] g2, int[] perm) {
+            int n = g1.length;
+
+            for (int i = 0; i < n; i++) {
+                int u1 = i;
+                int u2 = perm[i];
+
+                int[] adj1 = g1[u1];
+                int[] adj2 = g2[u2];
+
+                if (adj1.length != adj2.length) {
+                    return false; // Si no tienen el mismo numero de adyacentes, no son isomorfos
+                }
+                int[] adj1Mapped = new int[adj1.length];
+                for (int j = 0; j < adj1.length; j++) {
+                    adj1Mapped[j] = perm[adj1[j]]; // Mapeamos los vecinos segun la permutacion
+                }
+
+                Arrays.sort(adj1Mapped); // Ordenamos las listas para poder compararlas
+                Arrays.sort(adj2);
+
+                for (int j = 0; j < adj1Mapped.length; j++) {
+                    if (adj1Mapped[j] != adj2[j]) {
+                        return false; // Si algun vecino no coincide, no son isomorfos
+                    }
+                }
+            }
+
+            return true; // Todos los vecinos coinciden bajo la permutacion, son isomorfos
+        }
+
+        static boolean nextPermutation(int[] a) {
+            int i = a.length - 2;
+            while (i >= 0 && a[i] >= a[i + 1]) {
+                i--;
+            }
+            if (i < 0) {
+                return false; // No hay mas permutaciones posibles
+            }
+            int j = a.length - 1;
+            while (a[j] <= a[i]) {
+                j--;
+            }
+
+            int tmp = a[i];
+            a[i] = a[j];
+            a[j] = tmp; // Intercambiamos elementos para generar la siguiente permutación
+
+            // Invertimos la parte derecha para obtener la permutación lexicograficamente siguiente 
+            for (int l = i + 1, r = a.length - 1; l < r; l++, r--) {
+                tmp = a[l];
+                a[l] = a[r];
+                a[r] = tmp;
+            }
+
+            return true; // Se generó una nueva permutacion correctamente
+        }
+
+
+        /*
      * Determinau si el graf `g` (no dirigit) és un arbre. Si ho és, retornau el seu recorregut en
      * postordre desde el vèrtex `r`. Sinó, retornau null;
      *
      * En cas de ser un arbre, assumiu que l'ordre dels fills vé donat per l'array de veïns de cada
      * vèrtex.
-     */
-    static int[] exercici3(int[][] g, int r) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static int[] exercici3(int[][] g, int r) {
+            int n = g.length;
+            boolean[] visited = new boolean[n];
+            List<Integer> postorder = new ArrayList<>();
 
-    /*
+            // DFS auxiliar que devuelve false si detecta ciclo
+            boolean esArbol = dfs(g, r, -1, visited, postorder);
+            if (!esArbol) {
+                return null;
+            }
+
+            // Comprobamos que todos los vertices son visitados
+            for (boolean v : visited) {
+                if (!v) {
+                    return null; // no connexo → no es arbol
+                }
+            }
+
+            // Convertimos la lista a array
+            int[] resultat = new int[postorder.size()];
+            for (int i = 0; i < postorder.size(); i++) {
+                resultat[i] = postorder.get(i);
+            }
+            return resultat;
+        }
+
+        static boolean dfs(int[][] g, int actual, int pare, boolean[] visitado, List<Integer> postorder) {
+            visitado[actual] = true;
+            for (int vecino : g[actual]) {
+                if (!visitado[vecino]) {
+                    if (!dfs(g, vecino, actual, visitado, postorder)) {
+                        return false; // ciclo detectado a nivel inferior
+                    }
+                } else if (vecino != pare) {
+                    // Vecino visitado que no es padre → ciclo
+                    return false;
+                }
+            }
+            postorder.add(actual); // añadimos en postorder despues de visitar los hijos
+            return true;
+        }
+
+        /*
      * Suposau que l'entrada és un mapa com el següent, donat com String per files (vegeu els tests)
      *
      *   _____________________________________
@@ -361,63 +845,118 @@ class Entrega {
      *  - No es pot anar en diagonal
      *
      * Si és impossible, retornau -1.
-     */
-    static int exercici4(char[][] mapa) {
-      throw new UnsupportedOperationException("pendent");
+         */
+        static int exercici4(char[][] mapa) {
+            int[] dirX = {-1, 1, 0, 0}; // Direcciones verticales: arriba y abajo
+            int[] dirY = {0, 0, -1, 1}; // Direcciones orrizontales: izq y der
+            int n = mapa.length;
+            int m = mapa[0].length;
+
+            // Buscamos las posiciones de la O (origen) y la D (destino)
+            int startX = -1, startY = -1, endX = -1, endY = -1;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < m; j++) {
+                    if (mapa[i][j] == 'O') {
+                        startX = i;
+                        startY = j;
+                    }
+                    if (mapa[i][j] == 'D') {
+                        endX = i;
+                        endY = j;
+                    }
+                }
+            }
+
+            // Verificamos si falta alguna coordenada esencial
+            if (startX == -1 || endX == -1) {
+                return -1; // No se encontro origen o destinno
+            }
+
+            // Preparamos la estructura para hacer el recorrido BFS
+            ArrayList<int[]> cola = new ArrayList<>();
+            boolean[][] visitado = new boolean[n][m]; // Matriz para marcar lugares ya pasados
+
+            // Insertamos el punto inicial en la cola
+            cola.add(new int[]{startX, startY, 0}); // Almacenamos posicion y contador de pasos
+            visitado[startX][startY] = true;
+
+            // Iniciamos el recorrido en anchura
+            while (!cola.isEmpty()) {
+                int[] actual = cola.remove(0); // Sacamos el primero en entrar
+                int x = actual[0];
+                int y = actual[1];
+                int saltos = actual[2];
+
+                // Si llegamos al punto de destino
+                if (x == endX && y == endY) {
+                    return saltos;
+                }
+
+                // Movemos a las casillas vecinas (4 direcciones)
+                for (int i = 0; i < 4; i++) {
+                    int newX = x + dirX[i];
+                    int newY = y + dirY[i];
+
+                    // Validamos que la nueva casilla sea segura y no visitda
+                    if (newX >= 0 && newX < n && newY >= 0 && newY < m
+                            && !visitado[newX][newY] && mapa[newX][newY] != '#') {
+                        visitado[newX][newY] = true;
+                        cola.add(new int[]{newX, newY, saltos + 1}); // Añadimos nueva casilla con pasos aumentados
+                    }
+                }
+            }
+
+            // Si no encontramos camino posible
+            return -1;
+        }
+
+
+        /*
+     * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
+         */
+        static void tests() {
+
+            final int[][] D2 = {{}, {}};
+            final int[][] C3 = {{1, 2}, {0, 2}, {0, 1}};
+
+            final int[][] T1 = {{1, 2}, {0}, {0}};
+            final int[][] T2 = {{1}, {0, 2}, {1}};
+
+            // Exercici 1
+            // G té cicles?
+            test(3, 1, 1, () -> !exercici1(D2));
+            test(3, 1, 2, () -> exercici1(C3));
+
+            // Exercici 2
+            // Isomorfisme de grafs
+            test(3, 2, 1, () -> exercici2(T1, T2));
+            test(3, 2, 2, () -> !exercici2(T1, C3));
+
+            // Exercici 3
+            // Postordre
+            test(3, 3, 1, () -> exercici3(C3, 1) == null);
+            test(3, 3, 2, () -> Arrays.equals(exercici3(T1, 0), new int[]{1, 2, 0}));
+
+            // Exercici 4
+            // Laberint
+            test(3, 4, 1, () -> {
+                return -1 == exercici4(new char[][]{
+                    " #O".toCharArray(),
+                    "D# ".toCharArray(),
+                    " # ".toCharArray(),});
+            });
+
+            test(3, 4, 2, () -> {
+                return 8 == exercici4(new char[][]{
+                    "###D".toCharArray(),
+                    "O # ".toCharArray(),
+                    " ## ".toCharArray(),
+                    "    ".toCharArray(),});
+            });
+        }
     }
 
     /*
-     * Aquí teniu alguns exemples i proves relacionades amb aquests exercicis (vegeu `main`)
-     */
-    static void tests() {
-
-      final int[][] D2 = { {}, {} };
-      final int[][] C3 = { {1, 2}, {0, 2}, {0, 1} };
-
-      final int[][] T1 = { {1, 2}, {0}, {0} };
-      final int[][] T2 = { {1}, {0, 2}, {1} };
-
-      // Exercici 1
-      // G té cicles?
-
-      test(3, 1, 1, () -> !exercici1(D2));
-      test(3, 1, 2, () -> exercici1(C3));
-
-      // Exercici 2
-      // Isomorfisme de grafs
-
-      test(3, 2, 1, () -> exercici2(T1, T2));
-      test(3, 2, 2, () -> !exercici2(T1, C3));
-
-      // Exercici 3
-      // Postordre
-
-      test(3, 3, 1, () -> exercici3(C3, 1) == null);
-      test(3, 3, 2, () -> Arrays.equals(exercici3(T1, 0), new int[] { 1, 2, 0 }));
-
-      // Exercici 4
-      // Laberint
-
-      test(3, 4, 1, () -> {
-        return -1 == exercici4(new char[][] {
-            " #O".toCharArray(),
-            "D# ".toCharArray(),
-            " # ".toCharArray(),
-        });
-      });
-
-      test(3, 4, 2, () -> {
-        return 8 == exercici4(new char[][] {
-            "###D".toCharArray(),
-            "O # ".toCharArray(),
-            " ## ".toCharArray(),
-            "    ".toCharArray(),
-        });
-      });
-    }
-  }
-
-  /*
    * Aquí teniu els exercicis del Tema 4 (Aritmètica).
    *
    * En aquest tema no podeu:
@@ -426,9 +965,10 @@ class Entrega {
    *  - Utilitzar long, float ni double.
    *
    * Si implementau algun dels exercicis així, tendreu un 0 d'aquell exercici.
-   */
-  static class Tema4 {
-    /*
+     */
+    static class Tema4 {
+
+        /*
      * Primer, codificau el missatge en blocs de longitud 2 amb codificació ASCII. Després encriptau
      * el missatge utilitzant xifrat RSA amb la clau pública donada.
      *
@@ -441,12 +981,48 @@ class Entrega {
      * - n és major que 2¹⁴, i n² és menor que Integer.MAX_VALUE
      *
      * Pista: https://en.wikipedia.org/wiki/Exponentiation_by_squaring
-     */
-    static int[] exercici1(String msg, int n, int e) {
-      throw new UnsupportedOperationException("pendent");
-    }
+         */
+        static int[] exercici1(String msg, int n, int e) {
+            // converitr el mensaje a bytes
+            byte[] mensajeEnBytes = msg.getBytes();
+            // calculamos cuantos bloques de 2 bytes hay en el mensaje
+            // al dividir la longitud total del array de bytes entre 2
+            // obtenemos el numero de pares de caracteres que formaran cada bloque
+            int numBloques = mensajeEnBytes.length / 2;
+            int[] encriptado = new int[numBloques];
 
-    /*
+            // hacemos 2 boques de caracteres  bloc = byte0*128 + byte1
+            for (int i = 0; i < numBloques; i++) {
+                // extraemos el primer byte del bloque y lo convertimos a entero sin signo multiplicando por -1 en hexa
+                int bloque1 = mensajeEnBytes[2 * i] & 0xFF;
+                // extraemos el segundo byte del bloque y lo convertimos a entero sin signo por -1 en hexa
+                int bloque2 = mensajeEnBytes[2 * i + 1] & 0xFF;
+                // unimos los dos valores en un solo entero haciendo primer byte * 128 + segundo byte
+                int bloqueJunto = bloque1 * 128 + bloque2;
+
+                // ahora encriptamos el bloque usando exponenciacionb modular
+                long resultado = 1;
+                long base = bloqueJunto % n;
+                int exponente = e;
+                // hacmemos el bucle hasta que llegue a 0
+                while (exponente > 0) {
+                    // si el bit menos significativo de exp es 1
+                    // multiplicamos resultado por base y aplicamos % n
+                    if ((exponente & 1) == 1) {
+                        resultado = (resultado * base) % n;
+                    }
+                    // elevamos la base al cuadrado y hacemos el modulo para avanzar al siguiente bit
+                    base = (base * base) % n;
+                    // desplazamos exponente un bit a la derecha, basicamente dividir entre 2
+                    exponente >>= 1;
+                }
+                encriptado[i] = (int) resultado;
+            }
+            return encriptado;
+        }
+
+
+        /*
      * Primer, desencriptau el missatge utilitzant xifrat RSA amb la clau pública donada. Després
      * descodificau el missatge en blocs de longitud 2 amb codificació ASCII (igual que l'exercici
      * anterior, però al revés).
@@ -459,69 +1035,137 @@ class Entrega {
      * - El valor de tots els caràcters originals estava entre 32 i 127.
      * - La clau pública (n, e) és de la forma vista a les transparències.
      * - n és major que 2¹⁴, i n² és menor que Integer.MAX_VALUE
-     */
-    static String exercici2(int[] m, int n, int e) {
-      throw new UnsupportedOperationException("pendent");
+         */
+        static String exercici2(int[] bloquesCifrados, int moduloo, int exponente) {
+            //  factorizamos de n en p i q por fuerza bruta(lo pone el enunciado)
+            int p = 0, q = 0;
+            for (int i = 2; i * i <= moduloo; i++) {
+                if (moduloo % i == 0) {
+                    p = i;
+                    q = moduloo / i;
+                    break;
+                }
+            }
+            // si da 0, invocamos la excepcion
+            if (p == 0) {
+                throw new IllegalArgumentException("no se pudo factorizar n, que es" + moduloo);
+            }
+
+            // calculamos fi (p - 1) * (q - 1)
+            int fi = (p - 1) * (q - 1);
+
+            // calculo la clave privada d que es el inverso exponente % fi
+            int a = exponente, b = fi;
+            int x = 1, xx = 0;
+            while (b != 0) {
+                int cociente = a / b;
+                int resto = a % b;
+                a = b;
+                b = resto;
+                resto = x - cociente * xx;
+                x = xx;
+                xx = resto;
+            }
+            if (a != 1) {
+                throw new ArithmeticException("no existe el inverso " + exponente + " % " + fi);
+            }
+            int d = x;
+            if (d < 0) {
+                d += fi;
+                // miramos que d sea positivo si o si
+            }
+
+            // descrifrar y construir los bytes
+            byte[] resultadoEnBytes = new byte[bloquesCifrados.length * 2];
+            int indice = 0;
+            for (int bloque : bloquesCifrados) {
+                // calcula bloque^d % modulo de forma rápida
+                // va procesando bit a bit el exponente d, multiplicando al resultado
+                // sólo cuando el bit es 1 y haciendo al cuadrado la base en cada paso
+                long valor = 1;
+                long base = bloque % moduloo;
+                int exp = d;
+                // recorremos bit a bit exp hasta que sea cero
+                while (exp > 0) {
+                    // si el bit menos significativo d exp es 1, multiplicamos
+                    // valor por la base y hacemos el módulo
+                    if ((exp & 1) == 1) {
+                        // elevamos la base al cuadrado y hacemos el % con modulo para el siguiente bit
+                        valor = (valor * base) % moduloo;
+                    }
+                    base = (base * base) % moduloo;
+                    // desplazars exp un bit a la derecha , como si dividieramos por 2
+                    exp >>= 1;
+                }
+                int block = (int) valor;
+                // convertir el enetero en dos caracteres ascii con base 128
+                resultadoEnBytes[indice++] = (byte) (block / 128);
+                resultadoEnBytes[indice++] = (byte) (block % 128);
+            }
+
+            /// devolvemos el string
+            return new String(resultadoEnBytes);
+        }
+
+        static void tests() {
+            // Exercici 1
+            // Codificar i encriptar
+            test(4, 1, 1, () -> {
+                var n = 2 * 8209;
+                var e = 5;
+
+                var encr = exercici1("Patata", n, e);
+                return Arrays.equals(encr, new int[]{4907, 4785, 4785});
+            });
+
+            // Exercici 2
+            // Desencriptar i decodificar
+            test(4, 2, 1, () -> {
+                var n = 2 * 8209;
+                var e = 5;
+
+                var encr = new int[]{4907, 4785, 4785};
+                var decr = exercici2(encr, n, e);
+                return "Patata".equals(decr);
+            });
+        }
     }
 
-    static void tests() {
-      // Exercici 1
-      // Codificar i encriptar
-      test(4, 1, 1, () -> {
-        var n = 2*8209;
-        var e = 5;
-
-        var encr = exercici1("Patata", n, e);
-        return Arrays.equals(encr, new int[] { 4907, 4785, 4785 });
-      });
-
-      // Exercici 2
-      // Desencriptar i decodificar
-      test(4, 2, 1, () -> {
-        var n = 2*8209;
-        var e = 5;
-
-        var encr = new int[] { 4907, 4785, 4785 };
-        var decr = exercici2(encr, n, e);
-        return "Patata".equals(decr);
-      });
-    }
-  }
-
-  /*
+    /*
    * Aquest mètode `main` conté alguns exemples de paràmetres i dels resultats que haurien de donar
    * els exercicis. Podeu utilitzar-los de guia i també en podeu afegir d'altres (no els tendrem en
    * compte, però és molt recomanable).
    *
    * Podeu aprofitar el mètode `test` per comprovar fàcilment que un valor sigui `true`.
-   */
-  public static void main(String[] args) {
-    System.out.println("---- Tema 1 ----");
-    Tema1.tests();
-    System.out.println("---- Tema 2 ----");
-    Tema2.tests();
-    System.out.println("---- Tema 3 ----");
-    Tema3.tests();
-    System.out.println("---- Tema 4 ----");
-    Tema4.tests();
-  }
-
-  // Informa sobre el resultat de p, juntament amb quin tema, exercici i test es correspon.
-  static void test(int tema, int exercici, int test, BooleanSupplier p) {
-    try {
-      if (p.getAsBoolean())
-        System.out.printf("Tema %d, exercici %d, test %d: OK\n", tema, exercici, test);
-      else
-        System.out.printf("Tema %d, exercici %d, test %d: Error\n", tema, exercici, test);
-    } catch (Exception e) {
-      if (e instanceof UnsupportedOperationException && "pendent".equals(e.getMessage())) {
-        System.out.printf("Tema %d, exercici %d, test %d: Pendent\n", tema, exercici, test);
-      } else {
-        System.out.printf("Tema %d, exercici %d, test %d: Excepció\n", tema, exercici, test);
-        e.printStackTrace();
-      }
+     */
+    public static void main(String[] args) {
+        System.out.println("---- Tema 1 ----");
+        Tema1.tests();
+        System.out.println("---- Tema 2 ----");
+        Tema2.tests();
+        System.out.println("---- Tema 3 ----");
+        Tema3.tests();
+        System.out.println("---- Tema 4 ----");
+        Tema4.tests();
     }
-  }
+
+    // Informa sobre el resultat de p, juntament amb quin tema, exercici i test es correspon.
+    static void test(int tema, int exercici, int test, BooleanSupplier p) {
+        try {
+            if (p.getAsBoolean()) {
+                System.out.printf("Tema %d, exercici %d, test %d: OK\n", tema, exercici, test);
+            } else {
+                System.out.printf("Tema %d, exercici %d, test %d: Error\n", tema, exercici, test);
+            }
+        } catch (Exception e) {
+            if (e instanceof UnsupportedOperationException && "pendent".equals(e.getMessage())) {
+                System.out.printf("Tema %d, exercici %d, test %d: Pendent\n", tema, exercici, test);
+            } else {
+                System.out.printf("Tema %d, exercici %d, test %d: Excepció\n", tema, exercici, test);
+                e.printStackTrace();
+            }
+        }
+    }
 }
 
 // vim: set textwidth=100 shiftwidth=2 expandtab :
