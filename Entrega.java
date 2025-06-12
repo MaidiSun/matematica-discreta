@@ -51,7 +51,7 @@ import java.util.stream.IntStream;
  */
 class Entrega {
 
-    static final String[] NOMS = {"Maidi Sun", "Daniel Martin Colomar", "Alberto Atero Garcia"};
+    static final String[] NOMS = {"Maidi Sun", "Daniel Martin Colomar", "Alberto Atero García"};
 
     /*
    * Aquí teniu els exercicis del Tema 1 (Lògica).
